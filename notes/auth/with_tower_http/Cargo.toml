@@ -1,0 +1,9 @@
+[package]
+name = "auth-with-tower-http"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.4"
+tower-http = { version = "0.2", features = ["auth"] }
+tokio = { version = "1", features = ["full"] }

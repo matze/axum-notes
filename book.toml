@@ -1,0 +1,6 @@
+[book]
+authors = ["Matthias Vogelgesang"]
+language = "en"
+multilingual = false
+src = "."
+title = "axum notes"
