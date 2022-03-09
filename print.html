@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="notes/auth/index.html"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/auth/with_tower_http/index.html"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="notes/auth/index.html"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/auth/with_tower_http/index.html"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="notes/misc/index.html"><strong aria-hidden="true">4.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">4.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -305,6 +305,83 @@ content-length: 5
 date: Tue, 08 Mar 2022 19:59:15 GMT
 
 hello
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="serve-static-data-from-the-binary"><a class="header" href="#serve-static-data-from-the-binary">Serve static data from the binary</a></h1>
+<p>For very small (micro) services it can come in handy to just distribute a single
+binary containing both code and data such as CSS or Javascript and avoid the
+hassle of dealing with paths, permissions, deployment etc. In this example we
+use the handy <a href="https://crates.io/crates/include_dir">include_dir</a> crate to bundle a directory of data within the
+compiled binary and the <a href="https://crates.io/crates/mime_guess">mime_guess</a> crate to guess a MIME type based on the
+served file.</p>
+<h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+axum = &quot;0&quot;
+include_dir = &quot;0&quot;
+mime_guess = &quot;2&quot;
+tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
+</code></pre>
+<h2 id="code-2"><a class="header" href="#code-2">Code</a></h2>
+<p>First of all create a <code>static</code> directory next to the <code>src</code> directory and add
+this sample CSS file <code>foo.css</code>:</p>
+<pre><code class="language-css">body {
+    background-color: #ccc;
+}
+</code></pre>
+<p>The interesting part of the code are the route which matches <em>any</em> path prefixed
+<code>/static</code> and the handler. In the handler we first strip the initial slash
+(because that would not match with <code>get_file</code>) and then just try to load the
+file. If we have a match, we try to guess a suitable MIME type and return it,
+otherwise we just return a 404:</p>
+<pre><pre class="playground"><code class="language-rust">use axum::body::{self, Empty, Full};
+use axum::extract::Path;
+use axum::http::{header, HeaderValue, StatusCode};
+use axum::response::{IntoResponse, Response};
+use axum::routing::get;
+use axum::{Router, Server};
+use include_dir::{include_dir, Dir};
+
+static STATIC_DIR: Dir&lt;'_&gt; = include_dir!(&quot;$CARGO_MANIFEST_DIR/static&quot;);
+
+async fn static_path(Path(path): Path&lt;String&gt;) -&gt; impl IntoResponse {
+    let path = path.trim_start_matches('/');
+    let mime_type = mime_guess::from_path(path).first_or_text_plain();
+
+    match STATIC_DIR.get_file(path) {
+        None =&gt; Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(body::boxed(Empty::new()))
+            .unwrap(),
+        Some(file) =&gt; Response::builder()
+            .status(StatusCode::OK)
+            .header(
+                header::CONTENT_TYPE,
+                HeaderValue::from_str(mime_type.as_ref()).unwrap(),
+            )
+            .body(body::boxed(Full::from(file.contents())))
+            .unwrap(),
+    }
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let app = Router::new().route(&quot;/static/*path&quot;, get(static_path));
+
+    Server::bind(&amp;&quot;0.0.0.0:8080&quot;.parse()?)
+        .serve(app.into_make_service())
+        .await?;
+
+    Ok(())
+}
+</code></pre></pre>
+<h2 id="run-2"><a class="header" href="#run-2">Run</a></h2>
+<p>Start the server with</p>
+<pre><code>cargo run --bin serve-static-from-binary
+</code></pre>
+<p>and it will serve <code>/static/foo.css</code> as expected</p>
+<pre><code>$ curl http://127.0.0.1:8080/static/foo.css
+body {
+    background-color: #ccc;
+}
 </code></pre>
 
                     </main>

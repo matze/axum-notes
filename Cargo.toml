@@ -1,5 +1,6 @@
 [workspace]
 members = [
   "notes/auth/with_tower_http",
+  "notes/misc/serve_static_from_binary",
   "notes/templating/with_askama",
 ]

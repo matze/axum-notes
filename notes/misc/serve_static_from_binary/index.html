@@ -3,33 +3,33 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Authorization - axum notes</title>
+        <title>Serve data from binary - axum notes</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="icon" href="../../favicon.svg">
-        <link rel="shortcut icon" href="../../favicon.png">
-        <link rel="stylesheet" href="../../css/variables.css">
-        <link rel="stylesheet" href="../../css/general.css">
-        <link rel="stylesheet" href="../../css/chrome.css">
-        <link rel="stylesheet" href="../../css/print.css" media="print">
+        <link rel="icon" href="../../../favicon.svg">
+        <link rel="shortcut icon" href="../../../favicon.png">
+        <link rel="stylesheet" href="../../../css/variables.css">
+        <link rel="stylesheet" href="../../../css/general.css">
+        <link rel="stylesheet" href="../../../css/chrome.css">
+        <link rel="stylesheet" href="../../../css/print.css" media="print">
         <!-- Fonts -->
-        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="../../fonts/fonts.css">
+        <link rel="stylesheet" href="../../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../../fonts/fonts.css">
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="../../highlight.css">
-        <link rel="stylesheet" href="../../tomorrow-night.css">
-        <link rel="stylesheet" href="../../ayu-highlight.css">
+        <link rel="stylesheet" href="../../../highlight.css">
+        <link rel="stylesheet" href="../../../tomorrow-night.css">
+        <link rel="stylesheet" href="../../../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
     </head>
     <body>
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
-            var path_to_root = "../../";
+            var path_to_root = "../../../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/auth/index.html" class="active"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/misc/index.html"><strong aria-hidden="true">4.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">4.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">4.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html" class="active"><strong aria-hidden="true">4.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -107,7 +107,7 @@
                     <h1 class="menu-title">axum notes</h1>
 
                     <div class="right-buttons">
-                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../../../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                     </div>
@@ -134,16 +134,90 @@
 
                 <div id="content" class="content">
                     <main>
-                        
+                        <h1 id="serve-static-data-from-the-binary"><a class="header" href="#serve-static-data-from-the-binary">Serve static data from the binary</a></h1>
+<p>For very small (micro) services it can come in handy to just distribute a single
+binary containing both code and data such as CSS or Javascript and avoid the
+hassle of dealing with paths, permissions, deployment etc. In this example we
+use the handy <a href="https://crates.io/crates/include_dir">include_dir</a> crate to bundle a directory of data within the
+compiled binary and the <a href="https://crates.io/crates/mime_guess">mime_guess</a> crate to guess a MIME type based on the
+served file.</p>
+<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+axum = &quot;0&quot;
+include_dir = &quot;0&quot;
+mime_guess = &quot;2&quot;
+tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
+</code></pre>
+<h2 id="code"><a class="header" href="#code">Code</a></h2>
+<p>First of all create a <code>static</code> directory next to the <code>src</code> directory and add
+this sample CSS file <code>foo.css</code>:</p>
+<pre><code class="language-css">body {
+    background-color: #ccc;
+}
+</code></pre>
+<p>The interesting part of the code are the route which matches <em>any</em> path prefixed
+<code>/static</code> and the handler. In the handler we first strip the initial slash
+(because that would not match with <code>get_file</code>) and then just try to load the
+file. If we have a match, we try to guess a suitable MIME type and return it,
+otherwise we just return a 404:</p>
+<pre><pre class="playground"><code class="language-rust">use axum::body::{self, Empty, Full};
+use axum::extract::Path;
+use axum::http::{header, HeaderValue, StatusCode};
+use axum::response::{IntoResponse, Response};
+use axum::routing::get;
+use axum::{Router, Server};
+use include_dir::{include_dir, Dir};
+
+static STATIC_DIR: Dir&lt;'_&gt; = include_dir!(&quot;$CARGO_MANIFEST_DIR/static&quot;);
+
+async fn static_path(Path(path): Path&lt;String&gt;) -&gt; impl IntoResponse {
+    let path = path.trim_start_matches('/');
+    let mime_type = mime_guess::from_path(path).first_or_text_plain();
+
+    match STATIC_DIR.get_file(path) {
+        None =&gt; Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(body::boxed(Empty::new()))
+            .unwrap(),
+        Some(file) =&gt; Response::builder()
+            .status(StatusCode::OK)
+            .header(
+                header::CONTENT_TYPE,
+                HeaderValue::from_str(mime_type.as_ref()).unwrap(),
+            )
+            .body(body::boxed(Full::from(file.contents())))
+            .unwrap(),
+    }
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let app = Router::new().route(&quot;/static/*path&quot;, get(static_path));
+
+    Server::bind(&amp;&quot;0.0.0.0:8080&quot;.parse()?)
+        .serve(app.into_make_service())
+        .await?;
+
+    Ok(())
+}
+</code></pre></pre>
+<h2 id="run"><a class="header" href="#run">Run</a></h2>
+<p>Start the server with</p>
+<pre><code>cargo run --bin serve-static-from-binary
+</code></pre>
+<p>and it will serve <code>/static/foo.css</code> as expected</p>
+<pre><code>$ curl http://127.0.0.1:8080/static/foo.css
+body {
+    background-color: #ccc;
+}
+</code></pre>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../notes/templating/with_askama/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../../notes/misc/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
-                            </a>
-                            <a rel="next" href="../../notes/auth/with_tower_http/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
                     </nav>
@@ -151,11 +225,8 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../notes/templating/with_askama/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../../notes/misc/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
-                    </a>
-                    <a rel="next" href="../../notes/auth/with_tower_http/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
 
@@ -164,12 +235,12 @@
         <script type="text/javascript">
             window.playground_copyable = true;
         </script>
-        <script src="../../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../../mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../../searcher.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../../highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../../book.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../../book.js" type="text/javascript" charset="utf-8"></script>
 
         <!-- Custom JS scripts -->
     </body>
