@@ -4,3 +4,7 @@ language = "en"
 multilingual = false
 src = "."
 title = "axum notes"
+
+[output.html]
+git-repository-url = "https://github.com/matze/axum-notes"
+git-repository-icon = "fa-github"
