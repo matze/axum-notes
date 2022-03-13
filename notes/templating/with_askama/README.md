@@ -27,7 +27,7 @@ Note that we refer to the two template variables `name` and `age`. Thanks to the
 guarantees of askama, the compiler will complain if we do not derive a template that contains these
 variables:
 
-```rust
+```rust,noplayground
 {{#include src/main.rs}}
 ```
 

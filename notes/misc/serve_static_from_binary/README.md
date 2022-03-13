@@ -30,7 +30,7 @@ The interesting part of the code are the route which matches _any_ path prefixed
 file. If we have a match, we try to guess a suitable MIME type and return it,
 otherwise we just return a 404:
 
-```rust
+```rust,noplayground
 {{#include src/main.rs}}
 ```
 

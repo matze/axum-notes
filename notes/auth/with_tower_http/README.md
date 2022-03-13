@@ -23,7 +23,7 @@ the route is taken otherwise we return an error response.
 
 ## Code
 
-```rust
+```rust,noplayground
 {{#include src/main.rs}}
 ```
 
