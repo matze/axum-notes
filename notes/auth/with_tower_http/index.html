@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html" class="active"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">4.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">4.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html" class="active"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -159,7 +159,7 @@ tower-http = { version = &quot;0.2&quot;, features = [&quot;auth&quot;] }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
 <h2 id="code"><a class="header" href="#code">Code</a></h2>
-<pre><pre class="playground"><code class="language-rust">use axum::body::BoxBody;
+<pre><code class="language-rust noplayground">use axum::body::BoxBody;
 use axum::http::{header, Request, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
@@ -204,7 +204,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 
     Ok(())
 }
-</code></pre></pre>
+</code></pre>
 <h2 id="run"><a class="header" href="#run">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin auth-with-tower-http

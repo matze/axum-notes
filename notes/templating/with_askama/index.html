@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html" class="active"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">4.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">4.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html" class="active"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -171,7 +171,7 @@ tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 <p>Note that we refer to the two template variables <code>name</code> and <code>age</code>. Thanks to the compile-time
 guarantees of askama, the compiler will complain if we do not derive a template that contains these
 variables:</p>
-<pre><pre class="playground"><code class="language-rust">use askama::Template;
+<pre><code class="language-rust noplayground">use askama::Template;
 use axum::extract::Path;
 use axum::routing::get;
 use axum::Server;
@@ -197,7 +197,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 
     Ok(())
 }
-</code></pre></pre>
+</code></pre>
 <h2 id="run"><a class="header" href="#run">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin templating-with-askama
@@ -229,7 +229,7 @@ date: Tue, 08 Mar 2022 20:13:10 GMT
                             <a rel="prev" href="../../../notes/templating/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
-                            <a rel="next" href="../../../notes/auth/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../../../notes/db/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
@@ -241,7 +241,7 @@ date: Tue, 08 Mar 2022 20:13:10 GMT
                     <a rel="prev" href="../../../notes/templating/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
-                    <a rel="next" href="../../../notes/auth/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../../../notes/db/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

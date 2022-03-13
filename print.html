@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="notes/auth/index.html"><strong aria-hidden="true">3.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/auth/with_tower_http/index.html"><strong aria-hidden="true">3.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="notes/misc/index.html"><strong aria-hidden="true">4.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">4.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/db/with_sqlx/index.html"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li></ol></li><li class="chapter-item expanded "><a href="notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/auth/with_tower_http/index.html"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -174,7 +174,7 @@ tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 <p>Note that we refer to the two template variables <code>name</code> and <code>age</code>. Thanks to the compile-time
 guarantees of askama, the compiler will complain if we do not derive a template that contains these
 variables:</p>
-<pre><pre class="playground"><code class="language-rust">use askama::Template;
+<pre><code class="language-rust noplayground">use askama::Template;
 use axum::extract::Path;
 use axum::routing::get;
 use axum::Server;
@@ -200,7 +200,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 
     Ok(())
 }
-</code></pre></pre>
+</code></pre>
 <h2 id="run"><a class="header" href="#run">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin templating-with-askama
@@ -224,6 +224,130 @@ date: Tue, 08 Mar 2022 20:13:10 GMT
   &lt;/body&gt;
 &lt;/html&gt;
 </code></pre>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="database-access-with-sqlx"><a class="header" href="#database-access-with-sqlx">Database access with SQLx</a></h1>
+<p><a href="https://docs.rs/crate/sqlx/latest">SQLx</a> is an async-first SQL crate to access various SQL databases. While
+compile-time verification of queries is one of the outstanding features, we will
+use ordinary queries here to show how to use it together with axum.</p>
+<h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
+<pre><code class="language-toml"># See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = &quot;0&quot; }
+serde = &quot;1&quot;
+serde_json = &quot;1&quot;
+sqlx = { version = &quot;0.5&quot;, features = [&quot;runtime-tokio-rustls&quot;, &quot;sqlite&quot;, &quot;macros&quot;] }
+tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
+</code></pre>
+<h2 id="code-1"><a class="header" href="#code-1">Code</a></h2>
+<p>In this example, we will implement a super simple blog backend, consisting of
+posts with a title and some content string. We accept two routes <code>/api/post</code> and
+<code>/api/posts/</code>, the latter used to query all existing posts and to add a new one.</p>
+<p>As usual, import some used modules first:</p>
+<pre><code class="language-rust noplayground">use axum::extract::{Extension, Path};
+use axum::response::Json;
+use axum::routing::get;
+use serde::{Deserialize, Serialize};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
+use sqlx::{ConnectOptions, FromRow};
+use std::str::FromStr;
+use std::sync::Arc;
+</code></pre>
+<p>Now, we define a small helper struct that keeps the connection pool alive as
+well as an implementation to set up the (in-memory SQLite) database:</p>
+<pre><code class="language-rust noplayground">/// Database object encapsulating the connection pool and providing convenience functions.
+struct Database {
+    pool: SqlitePool,
+}
+
+impl Database {
+    pub async fn new() -&gt; Result&lt;Self, Box&lt;dyn std::error::Error&gt;&gt; {
+        let db_options = SqliteConnectOptions::from_str(&amp;&quot;:memory:&quot;)?
+            .create_if_missing(true)
+            .disable_statement_logging()
+            .to_owned();
+
+        let pool = SqlitePoolOptions::new().connect_with(db_options).await?;
+
+        sqlx::query(
+            &quot;CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY,
+                title TEXT NOT NULL,
+                content NOT NULL
+            );&quot;,
+        )
+        .execute(&amp;pool)
+        .await?;
+
+        Ok(Self { pool })
+    }
+}
+</code></pre>
+<p>Let's define a struct to represent a post and add the handlers to insert and
+query posts:</p>
+<pre><code class="language-rust noplayground">#[derive(FromRow, Serialize, Deserialize)]
+struct Post {
+    title: String,
+    content: String,
+}
+
+async fn get_post(Path(id): Path&lt;i64&gt;, Extension(db): Extension&lt;Arc&lt;Database&gt;&gt;) -&gt; Json&lt;Post&gt; {
+    Json(
+        sqlx::query_as::&lt;_, Post&gt;(&quot;SELECT title, content FROM posts WHERE id=?&quot;)
+            .bind(id)
+            .fetch_one(&amp;db.pool)
+            .await
+            .unwrap(),
+    )
+}
+
+async fn add_post(Extension(db): Extension&lt;Arc&lt;Database&gt;&gt;, Json(post): Json&lt;Post&gt;) {
+    sqlx::query(&quot;INSERT INTO posts (title, content) VALUES (?, ?);&quot;)
+        .bind(post.title)
+        .bind(post.content)
+        .execute(&amp;db.pool)
+        .await
+        .unwrap();
+}
+
+async fn posts(Extension(db): Extension&lt;Arc&lt;Database&gt;&gt;) -&gt; Json&lt;Vec&lt;Post&gt;&gt; {
+    Json(
+        sqlx::query_as::&lt;_, Post&gt;(&quot;SELECT title, content FROM posts&quot;)
+            .fetch_all(&amp;db.pool)
+            .await
+            .unwrap(),
+    )
+}
+</code></pre>
+<p>As you can see we can re-use the same struct (and benefit from type-safety
+guarantees) for both serialization and deserialization in the database
+as well as for sending and receiving posts to and from the client by deriving
+the appropriate traits.</p>
+<p>All that's left is setting up the server itself:</p>
+<pre><code class="language-rust noplayground">#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let state = Arc::new(Database::new().await?);
+
+    let app = axum::Router::new()
+        .route(&quot;/api/posts&quot;, get(posts).post(add_post))
+        .route(&quot;/api/posts/:id&quot;, get(get_post))
+        .layer(Extension(state));
+
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+
+    axum::Server::bind(&amp;addr)
+        .serve(app.into_make_service())
+        .await?;
+
+    Ok(())
+}
+</code></pre>
+<h2 id="run-1"><a class="header" href="#run-1">Run</a></h2>
+<p>Start the server with</p>
+<pre><code>cargo run --bin with-sqlx
+</code></pre>
+<p>and add posts with</p>
+<pre><code>curl -X POST -H 'Content-Type: application/json' -d '{&quot;title&quot;: &quot;Hello&quot;, &quot;content&quot;: &quot;World&quot;}' http://127.0.0.1:3000/api/posts
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="authorization-using-tower-http"><a class="header" href="#authorization-using-tower-http">Authorization using tower-http</a></h1>
 <p>In this example we will use tower-http's <a href="https://docs.rs/tower-http/latest/tower_http/auth/index.html">auth module</a> to add a <a href="https://docs.rs/tower-http/latest/tower_http/auth/struct.RequireAuthorizationLayer.html#method.custom">custom</a>
 authorization layer. There are also two builtin <code>bearer</code> and <code>password</code> layers
@@ -236,14 +360,14 @@ based on the request and any data on the struct itself we can make authorization
 decisions. In this example we extract the <code>Authorization</code> header field and
 compare it with a pre-defined value. If it matches we can return <code>Ok(())</code> and
 the route is taken otherwise we return an error response.</p>
-<h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
+<h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
 axum = &quot;0.4&quot;
 tower-http = { version = &quot;0.2&quot;, features = [&quot;auth&quot;] }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
-<h2 id="code-1"><a class="header" href="#code-1">Code</a></h2>
-<pre><pre class="playground"><code class="language-rust">use axum::body::BoxBody;
+<h2 id="code-2"><a class="header" href="#code-2">Code</a></h2>
+<pre><code class="language-rust noplayground">use axum::body::BoxBody;
 use axum::http::{header, Request, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
@@ -288,8 +412,8 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 
     Ok(())
 }
-</code></pre></pre>
-<h2 id="run-1"><a class="header" href="#run-1">Run</a></h2>
+</code></pre>
+<h2 id="run-2"><a class="header" href="#run-2">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin auth-with-tower-http
 </code></pre>
@@ -316,14 +440,14 @@ hassle of dealing with paths, permissions, deployment etc. In this example we
 use the handy <a href="https://crates.io/crates/include_dir">include_dir</a> crate to bundle a directory of data within the
 compiled binary and the <a href="https://crates.io/crates/mime_guess">mime_guess</a> crate to guess a MIME type based on the
 served file.</p>
-<h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
+<h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
 axum = &quot;0&quot;
 include_dir = &quot;0&quot;
 mime_guess = &quot;2&quot;
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
-<h2 id="code-2"><a class="header" href="#code-2">Code</a></h2>
+<h2 id="code-3"><a class="header" href="#code-3">Code</a></h2>
 <p>First of all create a <code>static</code> directory next to the <code>src</code> directory and add
 this sample CSS file <code>foo.css</code>:</p>
 <pre><code class="language-css">body {
@@ -335,7 +459,7 @@ this sample CSS file <code>foo.css</code>:</p>
 (because that would not match with <code>get_file</code>) and then just try to load the
 file. If we have a match, we try to guess a suitable MIME type and return it,
 otherwise we just return a 404:</p>
-<pre><pre class="playground"><code class="language-rust">use axum::body::{self, Empty, Full};
+<pre><code class="language-rust noplayground">use axum::body::{self, Empty, Full};
 use axum::extract::Path;
 use axum::http::{header, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -375,8 +499,8 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 
     Ok(())
 }
-</code></pre></pre>
-<h2 id="run-2"><a class="header" href="#run-2">Run</a></h2>
+</code></pre>
+<h2 id="run-3"><a class="header" href="#run-3">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin serve-static-from-binary
 </code></pre>

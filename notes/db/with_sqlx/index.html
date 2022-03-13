@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Serve data from binary - axum notes</title>
+        <title>Using SQLx - axum notes</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html" class="active"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx/index.html" class="active"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -113,7 +113,7 @@
                         <a href="https://github.com/matze/axum-notes" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/matze/axum-notes/edit/master/./notes/misc/serve_static_from_binary/README.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/matze/axum-notes/edit/master/./notes/db/with_sqlx/README.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
                     </div>
@@ -140,67 +140,117 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="serve-static-data-from-the-binary"><a class="header" href="#serve-static-data-from-the-binary">Serve static data from the binary</a></h1>
-<p>For very small (micro) services it can come in handy to just distribute a single
-binary containing both code and data such as CSS or Javascript and avoid the
-hassle of dealing with paths, permissions, deployment etc. In this example we
-use the handy <a href="https://crates.io/crates/include_dir">include_dir</a> crate to bundle a directory of data within the
-compiled binary and the <a href="https://crates.io/crates/mime_guess">mime_guess</a> crate to guess a MIME type based on the
-served file.</p>
+                        <h1 id="database-access-with-sqlx"><a class="header" href="#database-access-with-sqlx">Database access with SQLx</a></h1>
+<p><a href="https://docs.rs/crate/sqlx/latest">SQLx</a> is an async-first SQL crate to access various SQL databases. While
+compile-time verification of queries is one of the outstanding features, we will
+use ordinary queries here to show how to use it together with axum.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
-<pre><code class="language-toml">[dependencies]
-axum = &quot;0&quot;
-include_dir = &quot;0&quot;
-mime_guess = &quot;2&quot;
+<pre><code class="language-toml"># See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = &quot;0&quot; }
+serde = &quot;1&quot;
+serde_json = &quot;1&quot;
+sqlx = { version = &quot;0.5&quot;, features = [&quot;runtime-tokio-rustls&quot;, &quot;sqlite&quot;, &quot;macros&quot;] }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
 <h2 id="code"><a class="header" href="#code">Code</a></h2>
-<p>First of all create a <code>static</code> directory next to the <code>src</code> directory and add
-this sample CSS file <code>foo.css</code>:</p>
-<pre><code class="language-css">body {
-    background-color: #ccc;
-}
-</code></pre>
-<p>The interesting part of the code are the route which matches <em>any</em> path prefixed
-<code>/static</code> and the handler. In the handler we first strip the initial slash
-(because that would not match with <code>get_file</code>) and then just try to load the
-file. If we have a match, we try to guess a suitable MIME type and return it,
-otherwise we just return a 404:</p>
-<pre><code class="language-rust noplayground">use axum::body::{self, Empty, Full};
-use axum::extract::Path;
-use axum::http::{header, HeaderValue, StatusCode};
-use axum::response::{IntoResponse, Response};
+<p>In this example, we will implement a super simple blog backend, consisting of
+posts with a title and some content string. We accept two routes <code>/api/post</code> and
+<code>/api/posts/</code>, the latter used to query all existing posts and to add a new one.</p>
+<p>As usual, import some used modules first:</p>
+<pre><code class="language-rust noplayground">use axum::extract::{Extension, Path};
+use axum::response::Json;
 use axum::routing::get;
-use axum::{Router, Server};
-use include_dir::{include_dir, Dir};
+use serde::{Deserialize, Serialize};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
+use sqlx::{ConnectOptions, FromRow};
+use std::str::FromStr;
+use std::sync::Arc;
+</code></pre>
+<p>Now, we define a small helper struct that keeps the connection pool alive as
+well as an implementation to set up the (in-memory SQLite) database:</p>
+<pre><code class="language-rust noplayground">/// Database object encapsulating the connection pool and providing convenience functions.
+struct Database {
+    pool: SqlitePool,
+}
 
-static STATIC_DIR: Dir&lt;'_&gt; = include_dir!(&quot;$CARGO_MANIFEST_DIR/static&quot;);
+impl Database {
+    pub async fn new() -&gt; Result&lt;Self, Box&lt;dyn std::error::Error&gt;&gt; {
+        let db_options = SqliteConnectOptions::from_str(&amp;&quot;:memory:&quot;)?
+            .create_if_missing(true)
+            .disable_statement_logging()
+            .to_owned();
 
-async fn static_path(Path(path): Path&lt;String&gt;) -&gt; impl IntoResponse {
-    let path = path.trim_start_matches('/');
-    let mime_type = mime_guess::from_path(path).first_or_text_plain();
+        let pool = SqlitePoolOptions::new().connect_with(db_options).await?;
 
-    match STATIC_DIR.get_file(path) {
-        None =&gt; Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(body::boxed(Empty::new()))
-            .unwrap(),
-        Some(file) =&gt; Response::builder()
-            .status(StatusCode::OK)
-            .header(
-                header::CONTENT_TYPE,
-                HeaderValue::from_str(mime_type.as_ref()).unwrap(),
-            )
-            .body(body::boxed(Full::from(file.contents())))
-            .unwrap(),
+        sqlx::query(
+            &quot;CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY,
+                title TEXT NOT NULL,
+                content NOT NULL
+            );&quot;,
+        )
+        .execute(&amp;pool)
+        .await?;
+
+        Ok(Self { pool })
     }
 }
+</code></pre>
+<p>Let's define a struct to represent a post and add the handlers to insert and
+query posts:</p>
+<pre><code class="language-rust noplayground">#[derive(FromRow, Serialize, Deserialize)]
+struct Post {
+    title: String,
+    content: String,
+}
 
-#[tokio::main]
+async fn get_post(Path(id): Path&lt;i64&gt;, Extension(db): Extension&lt;Arc&lt;Database&gt;&gt;) -&gt; Json&lt;Post&gt; {
+    Json(
+        sqlx::query_as::&lt;_, Post&gt;(&quot;SELECT title, content FROM posts WHERE id=?&quot;)
+            .bind(id)
+            .fetch_one(&amp;db.pool)
+            .await
+            .unwrap(),
+    )
+}
+
+async fn add_post(Extension(db): Extension&lt;Arc&lt;Database&gt;&gt;, Json(post): Json&lt;Post&gt;) {
+    sqlx::query(&quot;INSERT INTO posts (title, content) VALUES (?, ?);&quot;)
+        .bind(post.title)
+        .bind(post.content)
+        .execute(&amp;db.pool)
+        .await
+        .unwrap();
+}
+
+async fn posts(Extension(db): Extension&lt;Arc&lt;Database&gt;&gt;) -&gt; Json&lt;Vec&lt;Post&gt;&gt; {
+    Json(
+        sqlx::query_as::&lt;_, Post&gt;(&quot;SELECT title, content FROM posts&quot;)
+            .fetch_all(&amp;db.pool)
+            .await
+            .unwrap(),
+    )
+}
+</code></pre>
+<p>As you can see we can re-use the same struct (and benefit from type-safety
+guarantees) for both serialization and deserialization in the database
+as well as for sending and receiving posts to and from the client by deriving
+the appropriate traits.</p>
+<p>All that's left is setting up the server itself:</p>
+<pre><code class="language-rust noplayground">#[tokio::main]
 async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-    let app = Router::new().route(&quot;/static/*path&quot;, get(static_path));
+    let state = Arc::new(Database::new().await?);
 
-    Server::bind(&amp;&quot;0.0.0.0:8080&quot;.parse()?)
+    let app = axum::Router::new()
+        .route(&quot;/api/posts&quot;, get(posts).post(add_post))
+        .route(&quot;/api/posts/:id&quot;, get(get_post))
+        .layer(Extension(state));
+
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+
+    axum::Server::bind(&amp;addr)
         .serve(app.into_make_service())
         .await?;
 
@@ -209,21 +259,21 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 </code></pre>
 <h2 id="run"><a class="header" href="#run">Run</a></h2>
 <p>Start the server with</p>
-<pre><code>cargo run --bin serve-static-from-binary
+<pre><code>cargo run --bin with-sqlx
 </code></pre>
-<p>and it will serve <code>/static/foo.css</code> as expected</p>
-<pre><code>$ curl http://127.0.0.1:8080/static/foo.css
-body {
-    background-color: #ccc;
-}
+<p>and add posts with</p>
+<pre><code>curl -X POST -H 'Content-Type: application/json' -d '{&quot;title&quot;: &quot;Hello&quot;, &quot;content&quot;: &quot;World&quot;}' http://127.0.0.1:3000/api/posts
 </code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../../notes/misc/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../../notes/db/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../../../notes/auth/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
                     </nav>
@@ -231,8 +281,11 @@ body {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../../notes/misc/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../../notes/db/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../../../notes/auth/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
 
