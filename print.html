@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/db/with_sqlx/index.html"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li></ol></li><li class="chapter-item expanded "><a href="notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/auth/with_tower_http/index.html"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="notes/templating/index.html"><strong aria-hidden="true">2.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/templating/with_askama/index.html"><strong aria-hidden="true">2.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="notes/db/index.html"><strong aria-hidden="true">3.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/db/with_sqlx/index.html"><strong aria-hidden="true">3.1.</strong> Using SQLx</a></li><li class="chapter-item expanded "><a href="notes/db/with_sqlx_tx/index.html"><strong aria-hidden="true">3.2.</strong> Using axum-sqlx-tx</a></li></ol></li><li class="chapter-item expanded "><a href="notes/auth/index.html"><strong aria-hidden="true">4.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/auth/with_tower_http/index.html"><strong aria-hidden="true">4.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="notes/misc/index.html"><strong aria-hidden="true">5.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">5.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -348,6 +348,97 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <p>and add posts with</p>
 <pre><code>curl -X POST -H 'Content-Type: application/json' -d '{&quot;title&quot;: &quot;Hello&quot;, &quot;content&quot;: &quot;World&quot;}' http://127.0.0.1:3000/api/posts
 </code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="database-access-with-axum-sqlx-tx"><a class="header" href="#database-access-with-axum-sqlx-tx">Database access with axum-sqlx-tx</a></h1>
+<p><a href="https://docs.rs/axum-sqlx-tx/latest/axum_sqlx_tx/">axum-sqlx-tx</a> is an alternative, layer-based approach to using SQLx directly.
+One big advantage is that transactions are committed or rolled back
+automatically if any of the inner requests succeed or return an error.</p>
+<h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+axum = { version = &quot;0&quot; }
+axum-sqlx-tx = { version = &quot;0&quot;, features = [&quot;sqlite&quot;] }
+serde = &quot;1&quot;
+serde_json = &quot;1&quot;
+sqlx = { version = &quot;0.5&quot;, features = [&quot;runtime-tokio-rustls&quot;, &quot;sqlite&quot;, &quot;macros&quot;] }
+tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
+</code></pre>
+<h2 id="code-2"><a class="header" href="#code-2">Code</a></h2>
+<p>Unlike before, we do not have to manage the SQL pool in an <code>std::Arc&lt;&gt;</code>
+ourselves, hence it is enough to just create the pool</p>
+<pre><code class="language-rust noplayground">async fn new_pool() -&gt; Result&lt;SqlitePool, Box&lt;dyn std::error::Error&gt;&gt; {
+    let db_options = SqliteConnectOptions::from_str(&amp;&quot;:memory:&quot;)?
+        .create_if_missing(true)
+        .disable_statement_logging()
+        .to_owned();
+
+    let pool = SqlitePoolOptions::new().connect_with(db_options).await?;
+
+    sqlx::query(
+        &quot;CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            content NOT NULL
+        );&quot;,
+    )
+    .execute(&amp;pool)
+    .await?;
+
+    Ok(pool)
+}
+</code></pre>
+<p>and add the layer to the routes:</p>
+<pre><code class="language-rust noplayground">#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let app = axum::Router::new()
+        .route(&quot;/api/posts&quot;, get(posts).post(add_post))
+        .route(&quot;/api/posts/:id&quot;, get(get_post))
+        .layer(axum_sqlx_tx::Layer::new(new_pool().await?));
+
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+
+    axum::Server::bind(&amp;addr)
+        .serve(app.into_make_service())
+        .await?;
+
+    Ok(())
+}
+</code></pre>
+<p>Because the <code>Tx</code> type implements sqlx' executor interface, all we need to change
+is the type of the parameter:</p>
+<pre><code class="language-rust noplayground">async fn get_post(Path(id): Path&lt;i64&gt;, mut tx: Tx&lt;Sqlite&gt;) -&gt; Json&lt;Post&gt; {
+    Json(
+        sqlx::query_as::&lt;_, Post&gt;(&quot;SELECT title, content FROM posts WHERE id=?&quot;)
+            .bind(id)
+            .fetch_one(&amp;mut tx)
+            .await
+            .unwrap(),
+    )
+}
+
+async fn add_post(mut tx: Tx&lt;Sqlite&gt;, Json(post): Json&lt;Post&gt;) {
+    sqlx::query(&quot;INSERT INTO posts (title, content) VALUES (?, ?);&quot;)
+        .bind(post.title)
+        .bind(post.content)
+        .execute(&amp;mut tx)
+        .await
+        .unwrap();
+}
+
+async fn posts(mut tx: Tx&lt;Sqlite&gt;) -&gt; Json&lt;Vec&lt;Post&gt;&gt; {
+    Json(
+        sqlx::query_as::&lt;_, Post&gt;(&quot;SELECT title, content FROM posts&quot;)
+            .fetch_all(&amp;mut tx)
+            .await
+            .unwrap(),
+    )
+}
+</code></pre>
+<h2 id="run-2"><a class="header" href="#run-2">Run</a></h2>
+<p>Start the server with</p>
+<pre><code>cargo run --bin with-sqlx-tx
+</code></pre>
+<p>and add posts with</p>
+<pre><code>curl -X POST -H 'Content-Type: application/json' -d '{&quot;title&quot;: &quot;Hello&quot;, &quot;content&quot;: &quot;World&quot;}' http://127.0.0.1:3000/api/posts
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="authorization-using-tower-http"><a class="header" href="#authorization-using-tower-http">Authorization using tower-http</a></h1>
 <p>In this example we will use tower-http's <a href="https://docs.rs/tower-http/latest/tower_http/auth/index.html">auth module</a> to add a <a href="https://docs.rs/tower-http/latest/tower_http/auth/struct.RequireAuthorizationLayer.html#method.custom">custom</a>
 authorization layer. There are also two builtin <code>bearer</code> and <code>password</code> layers
@@ -360,13 +451,13 @@ based on the request and any data on the struct itself we can make authorization
 decisions. In this example we extract the <code>Authorization</code> header field and
 compare it with a pre-defined value. If it matches we can return <code>Ok(())</code> and
 the route is taken otherwise we return an error response.</p>
-<h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
+<h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
 axum = &quot;0.4&quot;
 tower-http = { version = &quot;0.2&quot;, features = [&quot;auth&quot;] }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
-<h2 id="code-2"><a class="header" href="#code-2">Code</a></h2>
+<h2 id="code-3"><a class="header" href="#code-3">Code</a></h2>
 <pre><code class="language-rust noplayground">use axum::body::BoxBody;
 use axum::http::{header, Request, StatusCode};
 use axum::response::Response;
@@ -413,7 +504,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
     Ok(())
 }
 </code></pre>
-<h2 id="run-2"><a class="header" href="#run-2">Run</a></h2>
+<h2 id="run-3"><a class="header" href="#run-3">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin auth-with-tower-http
 </code></pre>
@@ -440,14 +531,14 @@ hassle of dealing with paths, permissions, deployment etc. In this example we
 use the handy <a href="https://crates.io/crates/include_dir">include_dir</a> crate to bundle a directory of data within the
 compiled binary and the <a href="https://crates.io/crates/mime_guess">mime_guess</a> crate to guess a MIME type based on the
 served file.</p>
-<h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
+<h2 id="dependencies-4"><a class="header" href="#dependencies-4">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
 axum = &quot;0&quot;
 include_dir = &quot;0&quot;
 mime_guess = &quot;2&quot;
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
-<h2 id="code-3"><a class="header" href="#code-3">Code</a></h2>
+<h2 id="code-4"><a class="header" href="#code-4">Code</a></h2>
 <p>First of all create a <code>static</code> directory next to the <code>src</code> directory and add
 this sample CSS file <code>foo.css</code>:</p>
 <pre><code class="language-css">body {
@@ -500,7 +591,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
     Ok(())
 }
 </code></pre>
-<h2 id="run-3"><a class="header" href="#run-3">Run</a></h2>
+<h2 id="run-4"><a class="header" href="#run-4">Run</a></h2>
 <p>Start the server with</p>
 <pre><code>cargo run --bin serve-static-from-binary
 </code></pre>
