@@ -5,6 +5,7 @@
   - [Using askama](./notes/templating/with_askama/README.md)
 - [Databases](./notes/db/README.md)
   - [Using SQLx](./notes/db/with_sqlx/README.md)
+  - [Using axum-sqlx-tx](./notes/db/with_sqlx_tx/README.md)
 - [Authorization](./notes/auth/README.md)
   - [Using tower-http](./notes/auth/with_tower_http/README.md)
 - [Misc](./notes/misc/README.md)
