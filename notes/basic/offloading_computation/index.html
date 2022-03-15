@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Using askama - axum notes</title>
+        <title>Offloading computation - axum notes</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/basic/index.html"><strong aria-hidden="true">2.</strong> Basic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/basic/offloading_computation/index.html"><strong aria-hidden="true">2.1.</strong> Offloading computation</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">3.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html" class="active"><strong aria-hidden="true">3.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/db/index.html"><strong aria-hidden="true">4.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">4.1.</strong> Using SQLx</a></li><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx_tx/index.html"><strong aria-hidden="true">4.2.</strong> Using axum-sqlx-tx</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">5.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">5.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">6.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">6.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../../notes/basic/index.html"><strong aria-hidden="true">2.</strong> Basic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/basic/offloading_computation/index.html" class="active"><strong aria-hidden="true">2.1.</strong> Offloading computation</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/templating/index.html"><strong aria-hidden="true">3.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/templating/with_askama/index.html"><strong aria-hidden="true">3.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/db/index.html"><strong aria-hidden="true">4.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">4.1.</strong> Using SQLx</a></li><li class="chapter-item expanded "><a href="../../../notes/db/with_sqlx_tx/index.html"><strong aria-hidden="true">4.2.</strong> Using axum-sqlx-tx</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/auth/index.html"><strong aria-hidden="true">5.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">5.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../../notes/misc/index.html"><strong aria-hidden="true">6.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">6.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -113,7 +113,7 @@
                         <a href="https://github.com/matze/axum-notes" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/matze/axum-notes/edit/master/./notes/templating/with_askama/README.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/matze/axum-notes/edit/master/./notes/basic/offloading_computation/README.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
                     </div>
@@ -140,96 +140,113 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="templating-using-askama"><a class="header" href="#templating-using-askama">Templating using askama</a></h1>
-<p><a href="https://docs.rs/askama/latest/askama/">Askama</a> implements a type-safe, Jinja-like template engine. While the templating engine itself
-is independent of any particular application, the <code>askama_axum</code> crate provides additional
-integration points by converting template results to response objects. Because Askama evaluates
-templates at compile time, it is both safe to use and fast to evaluate. On the other hand, it
-cannot be fed with templates by users at run-time.</p>
+                        <h1 id="offloading-computation"><a class="header" href="#offloading-computation">Offloading computation</a></h1>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-askama = { version = &quot;0&quot;, features = [&quot;with-axum&quot;] }
-askama_axum = { version = &quot;0&quot; }
-axum = &quot;0.4&quot;
+axum = { version = &quot;0&quot; }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
 <h2 id="code"><a class="header" href="#code">Code</a></h2>
-<p>First create a new sibling directory <code>templates</code> next to the <code>src</code> directory and add an
-<code>index.html</code>:</p>
-<pre><code class="language-html">&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-  &lt;head&gt;
-    &lt;meta charset=&quot;utf-8&quot;&gt;
-    &lt;title&gt;Askama&lt;/title&gt;
-  &lt;/head&gt;
-
-  &lt;body&gt;
-    &lt;p&gt;Hello {{ name }}, you are {{ age }} years old.&lt;/p&gt;
-  &lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-<p>Note that we refer to the two template variables <code>name</code> and <code>age</code>. Thanks to the compile-time
-guarantees of askama, the compiler will complain if we do not derive a template that contains these
-variables:</p>
-<pre><code class="language-rust noplayground">use askama::Template;
-use axum::extract::Path;
+<pre><code class="language-rust noplayground">use axum::extract::{Extension, Path};
+use axum::response::Json;
 use axum::routing::get;
-use axum::Server;
+use tokio::sync::{mpsc, oneshot};
 
-#[derive(Template)]
-#[template(path = &quot;index.html&quot;)]
-struct HtmlTemplate {
-    name: String,
-    age: u8,
+// Commands send to the processor. We use the oneshot sender to &quot;call back&quot; to the peer who send us
+// the command.
+enum Command {
+    Sleep {
+        secs: u64,
+        // Using oneshot::Sender&lt;Result&lt;_&gt;&gt; we can propagate errors back to the caller
+        tx: oneshot::Sender&lt;Result&lt;u64, ()&gt;&gt;,
+    },
 }
 
-async fn index(Path((name, age)): Path&lt;(String, u8)&gt;) -&gt; HtmlTemplate {
-    HtmlTemplate { name, age }
+async fn process_compute_request(mut rx: mpsc::Receiver&lt;Command&gt;) {
+    // Note, that this serializes incoming requests. If you want to handle requests in parallel,
+    // you have to spawn tasks once more.
+    while let Some(command) = rx.recv().await {
+        match command {
+            Command::Sleep { secs, tx } =&gt; {
+                let _ = tx.send(Ok(secs + 23));
+            }
+        }
+    }
+}
+
+async fn compute_complex(
+    Path(secs): Path&lt;u64&gt;,
+    Extension(command_tx): Extension&lt;mpsc::Sender&lt;Command&gt;&gt;,
+) -&gt; Json&lt;u64&gt; {
+    // Construct a oneshot channel to receive the result from the processor.
+    let (tx, rx) = oneshot::channel();
+
+    // Send the command carrying the payload as well as the result sender.
+    let _ = command_tx.send(Command::Sleep { secs, tx }).await;
+
+    // Wait for the result to be returned by the processor.
+    let result = rx.await.unwrap().unwrap();
+
+    Json(result)
+}
+
+async fn compute_simple(Path(secs): Path&lt;u64&gt;) -&gt; Json&lt;u64&gt; {
+    println!(&quot;asked to sleep for {secs} secs&quot;);
+
+    // Spawn an async task on a separate thread to avoid blocking the async run-time.
+    let result = tokio::task::spawn_blocking(move || {
+        // Unlike tokio::time::sleep, this one blocks the current thread.
+        std::thread::sleep(std::time::Duration::from_secs(secs));
+        secs + 42
+    })
+    .await
+    .unwrap();
+
+    println!(&quot;returned after {secs} secs&quot;);
+
+    Json(result)
 }
 
 #[tokio::main]
 async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-    let app = axum::Router::new().route(&quot;/:name/:age&quot;, get(index));
+    let (tx, rx) = mpsc::channel(128);
 
-    Server::bind(&amp;&quot;0.0.0.0:8080&quot;.parse()?)
-        .serve(app.into_make_service())
-        .await?;
+    let app = axum::Router::new()
+        .route(&quot;/compute/simple/:secs&quot;, get(compute_simple))
+        .route(&quot;/compute/complex/:secs&quot;, get(compute_complex))
+        .layer(Extension(tx));
+
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+
+    let server = tokio::task::spawn(async move {
+        axum::Server::bind(&amp;addr)
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
+    });
+
+    let processor = tokio::task::spawn(async move {
+        process_compute_request(rx).await;
+    });
+
+    let (_, _) = tokio::join!(server, processor);
 
     Ok(())
 }
 </code></pre>
 <h2 id="run"><a class="header" href="#run">Run</a></h2>
 <p>Start the server with</p>
-<pre><code>cargo run --bin templating-with-askama
-</code></pre>
-<p>Now, lets try to get <code>/john/32</code>:</p>
-<pre><code>$ curl -i http://127.0.0.1:8080/john/32
-HTTP/1.1 200 OK
-content-type: text/html; charset=utf-8
-content-length: 167
-date: Tue, 08 Mar 2022 20:13:10 GMT
-
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-  &lt;head&gt;
-    &lt;meta charset=&quot;utf-8&quot;&gt;
-    &lt;title&gt;Askama&lt;/title&gt;
-  &lt;/head&gt;
-
-  &lt;body&gt;
-    &lt;p&gt;Hello john, you are 32 years old.&lt;/p&gt;
-  &lt;/body&gt;
-&lt;/html&gt;
+<pre><code>cargo run --bin offloading_computation
 </code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../../notes/templating/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../../notes/basic/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
-                            <a rel="next" href="../../../notes/db/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../../../notes/templating/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
@@ -238,10 +255,10 @@ date: Tue, 08 Mar 2022 20:13:10 GMT
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../../notes/templating/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../../notes/basic/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
-                    <a rel="next" href="../../../notes/db/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../../../notes/templating/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

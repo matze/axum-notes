@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Authorization - axum notes</title>
+        <title>Basic - axum notes</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../notes/basic/index.html"><strong aria-hidden="true">2.</strong> Basic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/basic/offloading_computation/index.html"><strong aria-hidden="true">2.1.</strong> Offloading computation</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/templating/index.html"><strong aria-hidden="true">3.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/templating/with_askama/index.html"><strong aria-hidden="true">3.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/db/index.html"><strong aria-hidden="true">4.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">4.1.</strong> Using SQLx</a></li><li class="chapter-item expanded "><a href="../../notes/db/with_sqlx_tx/index.html"><strong aria-hidden="true">4.2.</strong> Using axum-sqlx-tx</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/auth/index.html" class="active"><strong aria-hidden="true">5.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">5.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/misc/index.html"><strong aria-hidden="true">6.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">6.1.</strong> Serve data from binary</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../notes/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../notes/basic/index.html" class="active"><strong aria-hidden="true">2.</strong> Basic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/basic/offloading_computation/index.html"><strong aria-hidden="true">2.1.</strong> Offloading computation</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/templating/index.html"><strong aria-hidden="true">3.</strong> Templating</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/templating/with_askama/index.html"><strong aria-hidden="true">3.1.</strong> Using askama</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/db/index.html"><strong aria-hidden="true">4.</strong> Databases</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/db/with_sqlx/index.html"><strong aria-hidden="true">4.1.</strong> Using SQLx</a></li><li class="chapter-item expanded "><a href="../../notes/db/with_sqlx_tx/index.html"><strong aria-hidden="true">4.2.</strong> Using axum-sqlx-tx</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/auth/index.html"><strong aria-hidden="true">5.</strong> Authorization</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/auth/with_tower_http/index.html"><strong aria-hidden="true">5.1.</strong> Using tower-http</a></li></ol></li><li class="chapter-item expanded "><a href="../../notes/misc/index.html"><strong aria-hidden="true">6.</strong> Misc</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../notes/misc/serve_static_from_binary/index.html"><strong aria-hidden="true">6.1.</strong> Serve data from binary</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -113,7 +113,7 @@
                         <a href="https://github.com/matze/axum-notes" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/matze/axum-notes/edit/master/./notes/auth/README.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/matze/axum-notes/edit/master/./notes/basic/README.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
                     </div>
@@ -145,10 +145,10 @@
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../notes/db/with_sqlx_tx/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../notes/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
-                            <a rel="next" href="../../notes/auth/with_tower_http/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../../notes/basic/offloading_computation/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
@@ -157,10 +157,10 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../notes/db/with_sqlx_tx/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../notes/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
-                    <a rel="next" href="../../notes/auth/with_tower_http/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../../notes/basic/offloading_computation/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -726,6 +726,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "offloading_computation"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "tokio",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
