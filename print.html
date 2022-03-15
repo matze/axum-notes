@@ -357,7 +357,7 @@ struct Database {
 
 impl Database {
     pub async fn new() -&gt; Result&lt;Self, Box&lt;dyn std::error::Error&gt;&gt; {
-        let db_options = SqliteConnectOptions::from_str(&amp;&quot;:memory:&quot;)?
+        let db_options = SqliteConnectOptions::from_str(&quot;:memory:&quot;)?
             .create_if_missing(true)
             .disable_statement_logging()
             .to_owned();
@@ -461,7 +461,7 @@ tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 <p>Unlike before, we do not have to manage the SQL pool in an <code>std::Arc&lt;&gt;</code>
 ourselves, hence it is enough to just create the pool</p>
 <pre><code class="language-rust noplayground">async fn new_pool() -&gt; Result&lt;SqlitePool, Box&lt;dyn std::error::Error&gt;&gt; {
-    let db_options = SqliteConnectOptions::from_str(&amp;&quot;:memory:&quot;)?
+    let db_options = SqliteConnectOptions::from_str(&quot;:memory:&quot;)?
         .create_if_missing(true)
         .disable_statement_logging()
         .to_owned();

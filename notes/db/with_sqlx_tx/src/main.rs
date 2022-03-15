@@ -8,7 +8,7 @@ use sqlx::{ConnectOptions, FromRow};
 use std::str::FromStr;
 
 async fn new_pool() -> Result<SqlitePool, Box<dyn std::error::Error>> {
-    let db_options = SqliteConnectOptions::from_str(&":memory:")?
+    let db_options = SqliteConnectOptions::from_str(":memory:")?
         .create_if_missing(true)
         .disable_statement_logging()
         .to_owned();
