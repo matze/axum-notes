@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "notes/auth/with_tower_http",
+  "notes/basic/offloading_computation",
   "notes/db/with_sqlx",
   "notes/db/with_sqlx_tx",
   "notes/misc/serve_static_from_binary",

@@ -1,6 +1,8 @@
 # Summary
 
 - [Introduction](./notes/README.md)
+- [Basic](./notes/basic/README.md)
+  - [Offloading computation](./notes/basic/offloading_computation/README.md)
 - [Templating](./notes/templating/README.md)
   - [Using askama](./notes/templating/with_askama/README.md)
 - [Databases](./notes/db/README.md)
