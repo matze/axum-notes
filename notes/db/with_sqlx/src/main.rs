@@ -14,7 +14,7 @@ struct Database {
 
 impl Database {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let db_options = SqliteConnectOptions::from_str(&":memory:")?
+        let db_options = SqliteConnectOptions::from_str(":memory:")?
             .create_if_missing(true)
             .disable_statement_logging()
             .to_owned();
