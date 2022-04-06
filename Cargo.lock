@@ -31,7 +31,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1463e29c311d12424dce7d3ef3d064200c56da064e339c37c40478269eb7ea68"
 dependencies = [
  "askama",
- "axum-core",
+ "axum-core 0.1.2",
  "http",
  "http-body",
 ]
@@ -97,7 +97,7 @@ dependencies = [
 name = "auth-with-tower-http"
 version = "0.1.0"
 dependencies = [
- "axum",
+ "axum 0.4.8",
  "tokio",
  "tower-http",
 ]
@@ -115,14 +115,45 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9f346c92c1e9a71d14fe4aaf7c2a5d9932cc4e5e48d8fb6641524416eb79ddd"
 dependencies = [
  "async-trait",
- "axum-core",
+ "axum-core 0.1.2",
  "bitflags",
  "bytes",
  "futures-util",
  "http",
  "http-body",
  "hyper",
- "matchit",
+ "matchit 0.4.6",
+ "memchr",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tower-layer",
+ "tower-service",
+]
+
+[[package]]
+name = "axum"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5611d4977882c5af1c0f7a34d51b5d87f784f86912bb543986b014ea4995ef93"
+dependencies = [
+ "async-trait",
+ "axum-core 0.2.0",
+ "bitflags",
+ "bytes",
+ "futures-util",
+ "http",
+ "http-body",
+ "hyper",
+ "itoa",
+ "matchit 0.5.0",
  "memchr",
  "mime",
  "percent-encoding",
@@ -153,12 +184,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-core"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95cd109b3e93c9541dcce5b0219dcf89169dcc58c1bebed65082808324258afb"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "http",
+ "http-body",
+ "mime",
+]
+
+[[package]]
 name = "axum-sqlx-tx"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6327dec736327e980219812e430fb1a9e280e0238c7583f2717eefdbd0bef7f2"
 dependencies = [
- "axum-core",
+ "axum-core 0.1.2",
  "bytes",
  "futures-core",
  "http",
@@ -637,6 +682,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9376a4f0340565ad675d11fc1419227faf5f60cd7ac9cb2e7185a471f30af833"
 
 [[package]]
+name = "matchit"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73cbba799671b762df5a175adf59ce145165747bb891505c43d09aefbbf38beb"
+
+[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -729,7 +780,7 @@ dependencies = [
 name = "offloading_computation"
 version = "0.1.0"
 dependencies = [
- "axum",
+ "axum 0.5.0",
  "tokio",
 ]
 
@@ -967,7 +1018,7 @@ dependencies = [
 name = "serve-static-from-binary"
 version = "0.1.0"
 dependencies = [
- "axum",
+ "axum 0.5.0",
  "include_dir",
  "mime_guess",
  "tokio",
@@ -1160,7 +1211,7 @@ version = "0.1.0"
 dependencies = [
  "askama",
  "askama_axum",
- "axum",
+ "axum 0.4.8",
  "tokio",
 ]
 
@@ -1603,7 +1654,7 @@ checksum = "504a2476202769977a040c6364301a3f65d0cc9e3fb08600b2bda150a0488316"
 name = "with_sqlx"
 version = "0.1.0"
 dependencies = [
- "axum",
+ "axum 0.5.0",
  "serde",
  "serde_json",
  "sqlx",
@@ -1614,7 +1665,7 @@ dependencies = [
 name = "with_sqlx_tx"
 version = "0.1.0"
 dependencies = [
- "axum",
+ "axum 0.4.8",
  "axum-sqlx-tx",
  "serde",
  "serde_json",

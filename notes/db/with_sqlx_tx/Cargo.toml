@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0" }
+axum = { version = "0.4" }
 axum-sqlx-tx = { version = "0", features = ["sqlite"] }
 serde = "1"
 serde_json = "1"
