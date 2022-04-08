@@ -146,8 +146,8 @@ One big advantage is that transactions are committed or rolled back
 automatically if any of the inner requests succeed or return an error.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-axum = { version = &quot;0.4&quot; }
-axum-sqlx-tx = { version = &quot;0&quot;, features = [&quot;sqlite&quot;] }
+axum = { version = &quot;0.5&quot; }
+axum-sqlx-tx = { git = &quot;https://github.com/wasdacraic/axum-sqlx-tx&quot;, features = [&quot;sqlite&quot;] }
 serde = &quot;1&quot;
 serde_json = &quot;1&quot;
 sqlx = { version = &quot;0.5&quot;, features = [&quot;runtime-tokio-rustls&quot;, &quot;sqlite&quot;, &quot;macros&quot;] }

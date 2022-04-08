@@ -146,7 +146,7 @@ best-in-class third-party dependencies.</p>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="offloading-computation"><a class="header" href="#offloading-computation">Offloading computation</a></h1>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-axum = { version = &quot;0&quot; }
+axum = { version = &quot;0.5&quot; }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
 <h2 id="code"><a class="header" href="#code">Code</a></h2>
@@ -249,9 +249,9 @@ templates at compile time, it is both safe to use and fast to evaluate. On the o
 cannot be fed with templates by users at run-time.</p>
 <h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-askama = { version = &quot;0&quot;, features = [&quot;with-axum&quot;] }
-askama_axum = { version = &quot;0&quot; }
-axum = &quot;0.4&quot;
+askama = { git = &quot;https://github.com/djc/askama&quot;, features = [&quot;with-axum&quot;] }
+askama_axum = { git = &quot;https://github.com/djc/askama&quot; }
+axum = &quot;0.5&quot;
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
 <h2 id="code-1"><a class="header" href="#code-1">Code</a></h2>
@@ -450,8 +450,8 @@ One big advantage is that transactions are committed or rolled back
 automatically if any of the inner requests succeed or return an error.</p>
 <h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-axum = { version = &quot;0.4&quot; }
-axum-sqlx-tx = { version = &quot;0&quot;, features = [&quot;sqlite&quot;] }
+axum = { version = &quot;0.5&quot; }
+axum-sqlx-tx = { git = &quot;https://github.com/wasdacraic/axum-sqlx-tx&quot;, features = [&quot;sqlite&quot;] }
 serde = &quot;1&quot;
 serde_json = &quot;1&quot;
 sqlx = { version = &quot;0.5&quot;, features = [&quot;runtime-tokio-rustls&quot;, &quot;sqlite&quot;, &quot;macros&quot;] }
@@ -549,7 +549,7 @@ compare it with a pre-defined value. If it matches we can return <code>Ok(())</c
 the route is taken otherwise we return an error response.</p>
 <h2 id="dependencies-4"><a class="header" href="#dependencies-4">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-axum = &quot;0.4&quot;
+axum = &quot;0.5&quot;
 tower-http = { version = &quot;0.2&quot;, features = [&quot;auth&quot;] }
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
@@ -629,7 +629,7 @@ compiled binary and the <a href="https://crates.io/crates/mime_guess">mime_guess
 served file.</p>
 <h2 id="dependencies-5"><a class="header" href="#dependencies-5">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-axum = &quot;0&quot;
+axum = &quot;0.5&quot;
 include_dir = &quot;0&quot;
 mime_guess = &quot;2&quot;
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }

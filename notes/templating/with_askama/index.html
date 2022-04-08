@@ -148,9 +148,9 @@ templates at compile time, it is both safe to use and fast to evaluate. On the o
 cannot be fed with templates by users at run-time.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-askama = { version = &quot;0&quot;, features = [&quot;with-axum&quot;] }
-askama_axum = { version = &quot;0&quot; }
-axum = &quot;0.4&quot;
+askama = { git = &quot;https://github.com/djc/askama&quot;, features = [&quot;with-axum&quot;] }
+askama_axum = { git = &quot;https://github.com/djc/askama&quot; }
+axum = &quot;0.5&quot;
 tokio = { version = &quot;1&quot;, features = [&quot;full&quot;] }
 </code></pre>
 <h2 id="code"><a class="header" href="#code">Code</a></h2>
