@@ -140,7 +140,18 @@
 
                 <div id="content" class="content">
                     <main>
-                        
+                        <h2 id="handling-ctrl-c-gracefully"><a class="header" href="#handling-ctrl-c-gracefully">Handling Ctrl-C gracefully</a></h2>
+<p>axum re-exports hyper's <a href="https://docs.rs/hyper/latest/hyper/server/struct.Server.html">Server</a> which provides the <a href="https://docs.rs/hyper/latest/hyper/server/struct.Server.html#method.with_graceful_shutdown">with_graceful_shutdown</a>
+method that is easily combined with tokio's <a href="https://docs.rs/tokio/latest/tokio/signal/fn.ctrl_c.html">signal::ctrl_c</a> function
+(available under the <code>signal</code> feature flag):</p>
+<pre><code class="language-rust  noplayground">axum::Server::bind(&amp;addr)
+    .serve(app.into_make_service())
+    .with_graceful_shutdown(async {
+        tokio::signal::ctrl_c().await.expect(&quot;failed to listen to ctrl-c&quot;);
+    })
+    .await?;
+</code></pre>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">

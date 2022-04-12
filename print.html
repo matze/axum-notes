@@ -143,7 +143,18 @@
 means a toolbox rather than a ready-made shed.</p>
 <p>These notes give you examples how to approach common tasks either directly with axum or
 best-in-class third-party dependencies.</p>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="offloading-computation"><a class="header" href="#offloading-computation">Offloading computation</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="handling-ctrl-c-gracefully"><a class="header" href="#handling-ctrl-c-gracefully">Handling Ctrl-C gracefully</a></h2>
+<p>axum re-exports hyper's <a href="https://docs.rs/hyper/latest/hyper/server/struct.Server.html">Server</a> which provides the <a href="https://docs.rs/hyper/latest/hyper/server/struct.Server.html#method.with_graceful_shutdown">with_graceful_shutdown</a>
+method that is easily combined with tokio's <a href="https://docs.rs/tokio/latest/tokio/signal/fn.ctrl_c.html">signal::ctrl_c</a> function
+(available under the <code>signal</code> feature flag):</p>
+<pre><code class="language-rust  noplayground">axum::Server::bind(&amp;addr)
+    .serve(app.into_make_service())
+    .with_graceful_shutdown(async {
+        tokio::signal::ctrl_c().await.expect(&quot;failed to listen to ctrl-c&quot;);
+    })
+    .await?;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="offloading-computation"><a class="header" href="#offloading-computation">Offloading computation</a></h1>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
 axum = { version = &quot;0.5&quot; }
